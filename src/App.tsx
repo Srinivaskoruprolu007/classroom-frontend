@@ -35,32 +35,34 @@ function App() {
               }}
               resources={[
                 {
-                  name: 'Dashboard',
-                  list: '/',
+                  name: "Dashboard",
+                  list: "/",
                   meta: {
-                    label: 'Home',
-                    icon: <Home />
-                  }
+                    label: "Home",
+                    icon: <Home />,
+                  },
                 },
                 {
-                  name: 'Subjects',
-                  list: '/subjects',
-                  create: '/subject/create',
+                  name: "subjects",
+                  list: "/subjects",
+                  create: "/subjects/create",
                   meta: {
-                    label: 'Subjects',
-                    icon: <Book />
-                  }
-                }
+                    label: "Subjects",
+                    icon: <Book />,
+                  },
+                },
               ]}
             >
               <Routes>
-                <Route element={
-                  <Layout>
-                    <Outlet />
-                  </Layout>
-                }>
+                <Route
+                  element={
+                    <Layout>
+                      <Outlet />
+                    </Layout>
+                  }
+                >
                   <Route path="/" element={<Dashboard />} />
-                  <Route path="/subjects" >
+                  <Route path="/subjects">
                     <Route index element={<SubjectList />} />
                     <Route path="create" element={<SubjectCreate />} />
                   </Route>
