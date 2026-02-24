@@ -194,7 +194,7 @@
 
 @layer components {
   .page-title {
-    @apply mb-3 text-3xl font-bold tracking-tight;
+    @apply mb-2 text-3xl font-bold tracking-tight;
   }
 
   .intro-row {
@@ -206,19 +206,24 @@
   }
 
   .action-row {
-    @apply w-full flex-col gap-3 sm:flex sm:flex-row sm:items-center sm:gap-2 lg:w-auto;
+    @apply flex w-full flex-col gap-3 sm:w-full sm:flex-row sm:items-center sm:justify-end sm:gap-2 lg:w-auto;
+  }
+
+  .action-row > div:last-child {
+    @apply flex w-full gap-2 sm:w-auto;
   }
 
   .search-field {
-    @apply relative w-full sm:min-w-72 lg:w-80;
+    @apply relative w-full sm:w-72 lg:w-80;
   }
 
   .search-field input {
-    @apply h-10 rounded-lg border-border bg-background pl-9;
+    @apply h-10 w-full rounded-lg border-border bg-background/90 pl-9 pr-3;
   }
 
   .search-icon {
     @apply pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground;
   }
 }
+
 
