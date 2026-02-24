@@ -16,10 +16,17 @@ import { DEPARTMENTS } from "@/constants";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
+
+const badgeByDepartment: Record<string, string> = {
+  cs: "border-sky-200 bg-sky-50 text-sky-700",
+  math: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  phy: "border-amber-200 bg-amber-50 text-amber-700",
+};
 
 const SubjectList = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [selectedDepartment, setSelectedDepartment] = useState("all");
 
   const permanentFilters = useMemo(() => {
@@ -37,7 +44,7 @@ const SubjectList = () => {
       });
     }
 
-    const trimmedQuery = searchQuery.trim();
+    const trimmedQuery = deferredSearchQuery.trim();
     if (trimmedQuery) {
       filters.push({
         field: "name",
@@ -47,7 +54,7 @@ const SubjectList = () => {
     }
 
     return filters;
-  }, [searchQuery, selectedDepartment]);
+  }, [deferredSearchQuery, selectedDepartment]);
 
   const subjectTable = useTable<Subject>({
     columns: useMemo<ColumnDef<Subject>[]>(
@@ -78,11 +85,6 @@ const SubjectList = () => {
             const department = DEPARTMENTS.find(
               (dept) => dept.value === departmentValue,
             );
-            const badgeByDepartment: Record<string, string> = {
-              cs: "border-sky-200 bg-sky-50 text-sky-700",
-              math: "border-emerald-200 bg-emerald-50 text-emerald-700",
-              phy: "border-amber-200 bg-amber-50 text-amber-700",
-            };
             return (
               <Badge
                 variant="outline"

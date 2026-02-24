@@ -82,23 +82,30 @@ export const dataProvider: DataProvider = {
         (item.order === "asc" || item.order === "desc"),
     );
 
-    for (const sorter of typedSorters) {
-      rows.sort((a, b) => {
-        const aValue = a[sorter.field];
-        const bValue = b[sorter.field];
+    if (typedSorters.length > 0) {
+      const compositeComparator = (a: Subject, b: Subject) => {
+        for (const sorter of typedSorters) {
+          const aValue = a[sorter.field];
+          const bValue = b[sorter.field];
 
-        if (aValue === bValue) return 0;
-        if (aValue === undefined || aValue === null) return 1;
-        if (bValue === undefined || bValue === null) return -1;
+          if (aValue === bValue) continue;
+          if (aValue === undefined || aValue === null) return 1;
+          if (bValue === undefined || bValue === null) return -1;
 
-        const result =
-          String(aValue).localeCompare(String(bValue), undefined, {
+          const result = String(aValue).localeCompare(String(bValue), undefined, {
             numeric: true,
             sensitivity: "base",
-          }) ?? 0;
+          });
 
-        return sorter.order === "asc" ? result : -result;
-      });
+          if (result !== 0) {
+            return sorter.order === "asc" ? result : -result;
+          }
+        }
+
+        return 0;
+      };
+
+      rows.sort(compositeComparator);
     }
 
     const current = pagination?.current ?? 1;
@@ -112,17 +119,56 @@ export const dataProvider: DataProvider = {
       total: rows.length,
     };
   },
-  getOne: async () => {
-    throw new Error("Method not implemented.");
+  getOne: async (params) => {
+    console.warn(
+      `[dataProvider] getOne fallback for resource "${params.resource}" and id "${String(params.id)}".`,
+    );
+    const subject =
+      params.resource === "subjects"
+        ? MOCK_SUBJECTS.find((item) => String(item.id) === String(params.id))
+        : undefined;
+
+    return {
+      data: (subject ??
+        ({
+          id: params.id,
+        } as BaseRecord)) as BaseRecord,
+    };
   },
-  create: async () => {
-    throw new Error("Method not implemented.");
+  create: async (params) => {
+    console.warn(
+      `[dataProvider] create fallback for resource "${params.resource}". No persistence is performed.`,
+    );
+
+    return {
+      data: {
+        id: Date.now(),
+        ...(params.variables as Record<string, unknown>),
+      } as BaseRecord,
+    };
   },
-  update: async () => {
-    throw new Error("Method not implemented.");
+  update: async (params) => {
+    console.warn(
+      `[dataProvider] update fallback for resource "${params.resource}" and id "${String(params.id)}". No persistence is performed.`,
+    );
+
+    return {
+      data: {
+        id: params.id,
+        ...(params.variables as Record<string, unknown>),
+      } as BaseRecord,
+    };
   },
-  deleteOne: async () => {
-    throw new Error("Method not implemented.");
+  deleteOne: async (params) => {
+    console.warn(
+      `[dataProvider] deleteOne fallback for resource "${params.resource}" and id "${String(params.id)}". No persistence is performed.`,
+    );
+
+    return {
+      data: {
+        id: params.id,
+      } as BaseRecord,
+    };
   },
   getApiUrl: () => {
     return "";
