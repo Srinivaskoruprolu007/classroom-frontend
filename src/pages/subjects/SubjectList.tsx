@@ -12,16 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DEPARTMENTS } from "@/constants";
+import { DEPARTMENT_OPTIONS } from "@/constants";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Search } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
 
 const badgeByDepartment: Record<string, string> = {
-  cs: "border-sky-200 bg-sky-50 text-sky-700",
-  math: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  phy: "border-amber-200 bg-amber-50 text-amber-700",
+  "computer science": "border-sky-200 bg-sky-50 text-sky-700",
+  mathematics: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  physics: "border-amber-200 bg-amber-50 text-amber-700",
 };
 
 const SubjectList = () => {
@@ -77,23 +77,24 @@ const SubjectList = () => {
         },
         {
           id: "department",
-          accessorKey: "department",
+          accessorFn: (row) =>
+            typeof row.department === "string"
+              ? row.department
+              : row.department?.name ?? "",
           size: 150,
           header: () => <p className="col-title">Department</p>,
           cell: ({ getValue }) => {
             const departmentValue = getValue<string>();
-            const department = DEPARTMENTS.find(
-              (dept) => dept.value === departmentValue,
-            );
+            const badgeKey = departmentValue.trim().toLowerCase();
             return (
               <Badge
                 variant="outline"
                 className={`rounded-full px-2.5 py-1 font-medium ${
-                  badgeByDepartment[departmentValue] ??
+                  badgeByDepartment[badgeKey] ??
                   "border-muted-foreground/20 bg-muted text-foreground"
                 }`}
               >
-                {department ? department.label : "Unknown"}
+                {departmentValue || "Unknown"}
               </Badge>
             );
           },
@@ -157,7 +158,7 @@ const SubjectList = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
-                {DEPARTMENTS.map((department) => (
+                {DEPARTMENT_OPTIONS.map((department) => (
                   <SelectItem key={department.value} value={department.value}>
                     {department.label}
                   </SelectItem>
