@@ -20,18 +20,15 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import UploadWidget from "@/components/ui/upload-widget";
+import type { UploadWidgetValue } from "@/@types";
 import {
-  ALLOWED_TYPES,
-  CLOUDINARY_UPLOAD_PRESET,
-  CLOUDINARY_UPLOAD_URL,
-  MAX_FILE_SIZE,
   subjects,
   teachers,
 } from "@/constants";
 import { classSchema } from "@/lib/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useBack } from "@refinedev/core";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -39,8 +36,6 @@ type ClassFormValues = z.infer<typeof classSchema>;
 
 const CreateClass = () => {
   const back = useBack();
-  const [bannerUploadError, setBannerUploadError] = useState("");
-  const [bannerUploading, setBannerUploading] = useState(false);
 
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(classSchema),
@@ -58,6 +53,11 @@ const CreateClass = () => {
     },
   });
 
+  const {
+    formState: { isSubmitting },
+    handleSubmit,
+  } = form;
+
   const onSubmit = (values: ClassFormValues) => {
     try {
       console.log("Form values:", values);
@@ -66,60 +66,7 @@ const CreateClass = () => {
     }
   };
 
-  const bannerUrl = form.watch("bannerUrl");
   const bannerPublicId = form.watch("bannerCldPubId");
-
-  const onBannerChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    setBannerUploadError("");
-
-    if (!file) return;
-
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      setBannerUploadError("Only PNG, JPG, JPEG, and WEBP files are allowed.");
-      return;
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      setBannerUploadError("Banner image must be 3MB or less.");
-      return;
-    }
-
-    try {
-      setBannerUploading(true);
-      const payload = new FormData();
-      payload.append("file", file);
-      payload.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-
-      const response = await fetch(CLOUDINARY_UPLOAD_URL, {
-        method: "POST",
-        body: payload,
-      });
-
-      if (!response.ok) {
-        throw new Error("Upload failed");
-      }
-
-      const result = (await response.json()) as {
-        secure_url?: string;
-        public_id?: string;
-      };
-
-      if (!result.secure_url || !result.public_id) {
-        throw new Error("Invalid upload response");
-      }
-
-      form.setValue("bannerUrl", result.secure_url, { shouldValidate: true });
-      form.setValue("bannerCldPubId", result.public_id, {
-        shouldValidate: true,
-      });
-    } catch {
-      setBannerUploadError("Failed to upload banner image. Try again.");
-    } finally {
-      setBannerUploading(false);
-      event.target.value = "";
-    }
-  };
 
   return (
     <CreateView className="create-class-page">
@@ -141,7 +88,7 @@ const CreateClass = () => {
           <Form {...form}>
             <form
               className="create-class-form"
-              onSubmit={form.handleSubmit(onSubmit)}
+              onSubmit={handleSubmit(onSubmit)}
             >
               <div className="create-class-section">
                 <h3 className="create-class-section-title">Class Details</h3>
@@ -153,43 +100,30 @@ const CreateClass = () => {
               <FormField
                 control={form.control}
                 name="bannerUrl"
-                render={() => (
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Banner Image</FormLabel>
+                    <FormLabel>
+                      Banner Image
+                      <span className="create-class-banner-label">*</span>
+                    </FormLabel>
                     <FormControl>
-                      <div className="create-class-banner-upload">
-                        <Input
-                          type="file"
-                          accept={ALLOWED_TYPES.join(",")}
-                          onChange={onBannerChange}
-                          disabled={bannerUploading}
-                        />
-                        <p className="create-class-banner-help">
-                          PNG/JPG/JPEG/WEBP, max 3MB.
-                        </p>
-                        {bannerUploading && (
-                          <p className="create-class-banner-help">
-                            Uploading banner...
-                          </p>
-                        )}
-                        {bannerUploadError && (
-                          <p className="create-class-banner-error">
-                            {bannerUploadError}
-                          </p>
-                        )}
-                        {bannerUrl && (
-                          <img
-                            src={bannerUrl}
-                            alt="Class banner preview"
-                            className="create-class-banner-preview"
-                          />
-                        )}
-                        {bannerPublicId && (
-                          <p className="create-class-banner-help">
-                            Uploaded: {bannerPublicId}
-                          </p>
-                        )}
-                      </div>
+                      <UploadWidget
+                        value={
+                          field.value
+                            ? {
+                                url: field.value,
+                                publicId: bannerPublicId ?? "",
+                              }
+                            : null
+                        }
+                        onChange={(file: UploadWidgetValue | null) => {
+                          field.onChange(file?.url ?? "");
+                          form.setValue("bannerCldPubId", file?.publicId ?? "", {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -368,7 +302,9 @@ const CreateClass = () => {
                 <Button type="button" variant="outline" onClick={back}>
                   Cancel
                 </Button>
-                <Button type="submit">Create Class</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  Create Class
+                </Button>
               </div>
             </form>
           </Form>
